@@ -1,0 +1,34 @@
+{
+    "name": "yagamuu/twitter-client-for-rtainjapan",
+    "description": "Twitter client for RTA in Japan Staff",
+    "type" : "project",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "yagamuu",
+            "email": "ygmpeer@gmail.com"
+        }
+    ],
+    "scripts": {
+        "test": "phpunit ./tests"
+    },
+    "require": {
+        "php": ">=7.0.0",
+        "mpyw/cowitter": "1.0.5",
+        "vlucas/phpdotenv": "^3.4",
+        "twig/twig": "^2.11",
+        "twig/extensions": "^1.5",
+        "phpFastCache/phpFastCache": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "yagamuu\\TwitterClientForRtainjapan\\": "src/",
+            "yagamuu\\TwitterClientForRtainjapan\\Tests\\": "tests/",
+            "yagamuu\\TwitterClientForRtainjapan\\Tests\\Examples\\": "tests/examples"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.3",
+        "mikey179/vfsstream": "^1.6"
+    }
+}
