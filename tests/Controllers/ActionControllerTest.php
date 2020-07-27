@@ -91,6 +91,24 @@ class ActionControllerTest extends TestCase
         $this->assertEquals($expected, $payload);
     }
     
+    /** @test */
+    public function testPostMediaWithEmptyFiles()
+    {
+        $app = $this->getAppInstance();
+        
+        $request = $this->createRequest('POST', '/api/twitter/media/upload');
+
+        $response = $app->handle($request);
+        $payload = (string)$response->getBody();
+        $expectedData = [
+            'code' => 10,
+            'error' => ['message' => 'Failed to get uploaded file.']
+        ];
+        $expected = json_encode($expectedData, JSON_PRETTY_PRINT);
+
+        $this->assertEquals($expected, $payload);
+    }
+    
 
     /** @test */
     public function testDeleteTweet()
