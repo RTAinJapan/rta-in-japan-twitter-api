@@ -51,6 +51,9 @@ class ActionController extends ApiController
     public function postUpload(Request $request, Response $response): Response
     {
         $uploadedFiles = $request->getUploadedFiles();
+        if (empty($uploadedFiles)) {
+            return $this->errorResponse($response, 'Failed to get uploaded file.');
+        }
         /** @var UploadedFile */ 
         $uploadedFile = reset($uploadedFiles);
         if ($uploadedFile->getError() !== UPLOAD_ERR_OK) {
