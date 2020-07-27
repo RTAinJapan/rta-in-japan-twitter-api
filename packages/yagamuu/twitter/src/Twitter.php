@@ -210,6 +210,8 @@ class Twitter
                 if (!$isVideo) {
                     $upload = [];
                     foreach ($files as $file) {
+                        $fileObj = new \SplFileObject($file, 'rb');
+                        self::validateFileSize($fileObj->getPath());
                         $upload[] = $this->client->postMultipartAsync(
                             'media/upload',
                             [
@@ -221,6 +223,7 @@ class Twitter
                     $media_ids = implode(',', array_column($info, 'media_id_string'));
                 } else {
                     $file = $files[0];
+                    self::validateFileSize($file->getPath());
                     $video = new \SplFileObject($file, 'rb');
                     $method = self::isVideoFile($file) ? 'uploadVideoAsync' : 'uploadAnimeGifAsync';
                     $media_ids = (yield $this->client->$method($video))->media_id_string;
@@ -331,6 +334,7 @@ class Twitter
         $media_id_string = '';
         $errors = [];
         try {
+            self::validateFileSize($path);
             if (self::isVideoFile($path) || self::isAnimeGif($path)) {
                 $media_id_string = Co::wait(function () use ($path) {
                     $video = new \SplFileObject($path, 'rb');
@@ -351,6 +355,26 @@ class Twitter
             'errors'          => $errors,
             'media_id_string' => $media_id_string
         ];
+    }
+
+    private static function validateFileSize(string $path): bool
+    {
+        if (self::isVideoFile($path)) {
+            $maxFileSize = Constant::MAX_FILE_SIZE_VIDEO;
+        } else if (self::isAnimeGif($path)) {
+            $maxFileSize = Constant::MAX_FILE_SIZE_GIF_ANIME;
+        } else {
+            $maxFileSize = Constant::MAX_FILE_SIZE_IMAGE;
+        }
+
+        $file = new \SplFileObject($path, 'rb');
+        if ($file->getSize() > $maxFileSize) {
+            throw new ValidationErrorException([
+                $file->getFilename() => 'Image size must be <= ' . $maxFileSize . ' bytes'
+            ]);
+        }
+
+        return true;
     }
 
     private static function getTweetUrl($status)
