@@ -9,12 +9,12 @@ use mpyw\Cowitter\Client;
 use org\bovigo\vfs\content\LargeFileContent;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamFile;
+use phpDocumentor\Reflection\DocBlock\Tags\Example;
 use Phpfastcache\CacheManager;
 use Phpfastcache\Config\Config;
 use yagamuu\TwitterClientForRtainjapan\Twitter;
 use yagamuu\TwitterClientForRtainjapan\Tests\CacheManagerProvider;
 use yagamuu\TwitterClientForRtainjapan\Tests\Examples;
-use yagamuu\TwitterClientForRtainjapan\ValidationErrorException;
 
 class TwitterTest extends TestCase
 {
@@ -284,7 +284,7 @@ class TwitterTest extends TestCase
 
     /**
      * @test
-     * @dataProvider invalidFileProvider
+     * @dataProvider provideLargeMedia
      */
     public function testPostTweetWithLargeMedias(vfsStreamFile $file, string $message):void
     {
@@ -301,6 +301,12 @@ class TwitterTest extends TestCase
         ];
 
         $mock_client = $this->client_builder->getMock();
+        $mock_client->expects($this->any())
+                ->method('get')
+                ->withConsecutive([
+                    $this->equalTo('statuses/update'),
+                    $this->equalTo(['status' => 'Hello, Twitter!', 'media_ids' => '1'])])
+                ->willReturn(Examples\GetStatusesUserTimelines::example());
 
         $twitter = new Twitter($mock_client, $this->cache);
 
@@ -309,7 +315,7 @@ class TwitterTest extends TestCase
         ]);
 
         $this->assertEquals([
-            'errors' => [$files['name'] . '="' . $message . '"'],
+            'errors' => [$files['name'][0] . '="' . $message . '"'],
             'informations' => []
         ], $response);
     }

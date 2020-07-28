@@ -211,7 +211,7 @@ class Twitter
                     $upload = [];
                     foreach ($files as $file) {
                         $fileObj = new \SplFileObject($file, 'rb');
-                        self::validateFileSize($fileObj->getPath());
+                        self::validateFileSize($fileObj->getPathname());
                         $upload[] = $this->client->postMultipartAsync(
                             'media/upload',
                             [
@@ -223,8 +223,8 @@ class Twitter
                     $media_ids = implode(',', array_column($info, 'media_id_string'));
                 } else {
                     $file = $files[0];
-                    self::validateFileSize($file->getPath());
                     $video = new \SplFileObject($file, 'rb');
+                    self::validateFileSize($video->getPathname());
                     $method = self::isVideoFile($file) ? 'uploadVideoAsync' : 'uploadAnimeGifAsync';
                     $media_ids = (yield $this->client->$method($video))->media_id_string;
                 }
