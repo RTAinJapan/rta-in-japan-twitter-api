@@ -6,7 +6,10 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use PHPUnit\Framework\TestCase;
 
 use mpyw\Cowitter\Client;
+use org\bovigo\vfs\content\LargeFileContent;
 use org\bovigo\vfs\vfsStream;
+use org\bovigo\vfs\vfsStreamFile;
+use phpDocumentor\Reflection\DocBlock\Tags\Example;
 use Phpfastcache\CacheManager;
 use Phpfastcache\Config\Config;
 use yagamuu\TwitterClientForRtainjapan\Twitter;
@@ -279,6 +282,44 @@ class TwitterTest extends TestCase
         ], $response);
     }
 
+    /**
+     * @test
+     * @dataProvider provideLargeMedia
+     */
+    public function testPostTweetWithLargeMedias(vfsStreamFile $file, string $message):void
+    {
+        $root = vfsStream::setup('root');
+        $mockFile = $file->at($root);
+        $files = [
+            'name' => [$mockFile->getName()],
+            'type' => [mime_content_type($mockFile->url())],
+            'size' => [$mockFile->size()],
+            'tmp_name' => [
+                $mockFile->url()
+            ],
+            'error' => [UPLOAD_ERR_OK]
+        ];
+
+        $mock_client = $this->client_builder->getMock();
+        $mock_client->expects($this->any())
+                ->method('get')
+                ->withConsecutive([
+                    $this->equalTo('statuses/update'),
+                    $this->equalTo(['status' => 'Hello, Twitter!', 'media_ids' => '1'])])
+                ->willReturn(Examples\GetStatusesUserTimelines::example());
+
+        $twitter = new Twitter($mock_client, $this->cache);
+
+        $response = $twitter->postTweet('Hello, Twitter!', [
+            'media' => $files
+        ]);
+
+        $this->assertEquals([
+            'errors' => [$files['name'][0] . '="' . $message . '"'],
+            'informations' => []
+        ], $response);
+    }
+
     /** @dataProvider invalidFileProvider */
     public function testCatchRuntimeExceptionOnPostTweet($files):void
     {
@@ -369,6 +410,47 @@ class TwitterTest extends TestCase
             'errors'          => [],
             'media_id_string' => '1'
         ], $response);
+    }
+
+    /**
+     * @test
+     * @dataProvider provideLargeMedia
+     */
+    public function testUploadOverSizeImage(vfsStreamFile $file, string $message): void
+    {
+        $root = vfsStream::setup('root');
+        $mockFile =$file->at($root);
+        $files = [
+            'name' => $mockFile->getName(),
+            'type' => mime_content_type($mockFile->url()),
+            'size' => $mockFile->size(),
+            'tmp_name' => $mockFile->url(),
+            'error' => [UPLOAD_ERR_OK]
+        ];
+
+        $media_api_responses = [
+            Examples\PostMediaUpload::example()
+        ];
+        $media_api_responses[0]->media_id = 1;
+        $media_api_responses[0]->media_id_string = '1';
+
+        $mock_client = $this->client_builder->getMock();
+        $twitter = new Twitter($mock_client, $this->cache);
+
+        $response = $twitter->uploadMedia($files['tmp_name'], $files['type'], $files['name']);
+        $this->assertEquals([
+            'errors'          => [$files['name'] . '="' . $message . '"'],
+            'media_id_string' => ''
+        ], $response);
+    }
+    
+    public function provideLargeMedia(): array {
+        return [
+            [
+                vfsStream::newFile('big.jpg')->setContent(LargeFileContent::withMegabytes(6)),
+                'Image size must be <= 5000000 bytes'
+            ]
+        ];
     }
 
     public function testGetSearchTweet():void
