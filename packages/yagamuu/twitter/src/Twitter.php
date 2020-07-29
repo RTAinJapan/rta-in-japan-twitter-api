@@ -135,9 +135,13 @@ class Twitter
                 // 値を確認
                 switch ($error) {
                     case UPLOAD_ERR_OK: // OK
-                        $file = $files['media']['tmp_name'][$key];
-                        $uploads[] = $file;
-                        if (self::isVideoFile($file) || self::isAnimeGif($file)) {
+                        $fileName = $files['media']['tmp_name'][$key];
+                        $clientFileName = $files['media']['name'][$key];
+                        $uploads[] = [
+                            'file' => $fileName,
+                            'clientFileName' => $clientFileName
+                        ];
+                        if (self::isVideoFile($fileName) || self::isAnimeGif($fileName)) {
                             $videoOrAnimeGifFlag = true;
                         }
                         break;
@@ -210,12 +214,12 @@ class Twitter
                 if (!$isVideo) {
                     $upload = [];
                     foreach ($files as $file) {
-                        $fileObj = new \SplFileObject($file, 'rb');
-                        self::validateFileSize($fileObj->getPathname());
+                        $fileObj = new \SplFileObject($file['file'], 'rb');
+                        self::validateFileSize($fileObj->getPathname(), $file['clientFileName']);
                         $upload[] = $this->client->postMultipartAsync(
                             'media/upload',
                             [
-                                'media' => new \CURLFile($file)
+                                'media' => new \CURLFile($file['file'])
                             ]
                         );
                     }
@@ -223,9 +227,9 @@ class Twitter
                     $media_ids = implode(',', array_column($info, 'media_id_string'));
                 } else {
                     $file = $files[0];
-                    $video = new \SplFileObject($file, 'rb');
-                    self::validateFileSize($video->getPathname());
-                    $method = self::isVideoFile($file) ? 'uploadVideoAsync' : 'uploadAnimeGifAsync';
+                    $video = new \SplFileObject($file['file'], 'rb');
+                    self::validateFileSize($video->getPathname(), $file['clientFileName']);
+                    $method = self::isVideoFile($file['file']) ? 'uploadVideoAsync' : 'uploadAnimeGifAsync';
                     $media_ids = (yield $this->client->$method($video))->media_id_string;
                 }
 
@@ -334,7 +338,7 @@ class Twitter
         $media_id_string = '';
         $errors = [];
         try {
-            self::validateFileSize($path);
+            self::validateFileSize($path, $name);
             if (self::isVideoFile($path) || self::isAnimeGif($path)) {
                 $media_id_string = Co::wait(function () use ($path) {
                     $video = new \SplFileObject($path, 'rb');
@@ -357,20 +361,23 @@ class Twitter
         ];
     }
 
-    private static function validateFileSize(string $path): bool
+    private static function validateFileSize(string $path, string $submitFileName): bool
     {
         if (self::isVideoFile($path)) {
+            $fileType = 'Video';
             $maxFileSize = Constant::MAX_FILE_SIZE_VIDEO;
         } else if (self::isAnimeGif($path)) {
+            $fileType = 'Animation GIF';
             $maxFileSize = Constant::MAX_FILE_SIZE_GIF_ANIME;
         } else {
+            $fileType = 'Image';
             $maxFileSize = Constant::MAX_FILE_SIZE_IMAGE;
         }
 
         $file = new \SplFileObject($path, 'rb');
         if ($file->getSize() > $maxFileSize) {
             throw new ValidationErrorException([
-                $file->getFilename() => 'Image size must be <= ' . $maxFileSize . ' bytes'
+                $submitFileName => $fileType . ' size must be <= ' . $maxFileSize . ' bytes'
             ]);
         }
 
