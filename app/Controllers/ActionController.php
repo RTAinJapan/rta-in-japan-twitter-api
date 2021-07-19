@@ -29,7 +29,7 @@ class ActionController extends ApiController
     public function postTweet(Request $request, Response $response)
     {
         $data = $request->getParsedBody();
-        $result = $this->twitter->postUpdate($data['status'] ?? '', $data['media_ids'] ?? []);
+        $result = $this->twitter->postUpdate($data['status'] ?? '', $data['media_ids'] ?? [], $data);
 
         if (count($result['errors']) > 0) {
             return $this->errorResponse($response, implode(PHP_EOL, $result['errors']));
