@@ -371,6 +371,7 @@ class Twitter
         foreach ($options as $key => $value) {
             if ($key === 'in_reply_to_status_id') {
                 $request['in_reply_to_status_id'] = $value;
+                $request['auto_populate_reply_metadata'] = true;
             }
             if ($key === 'attachment_url' && filter_var($value, FILTER_VALIDATE_URL) && preg_match('|^https?://twitter.com/.*$|', $value)) {
                 $request['attachment_url'] = $value;
