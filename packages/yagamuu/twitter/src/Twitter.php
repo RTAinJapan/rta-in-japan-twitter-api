@@ -298,9 +298,10 @@ class Twitter
      * ツイートの投稿を行う
      * @param string $status ツイート本文
      * @param array $media_ids アップロードしたいメディアのid
+     * @param array $options その他パラメーター
      * @return array
      */
-    public function postUpdate(string $status, array $media_ids = []): array
+    public function postUpdate(string $status, array $media_ids = [], array $options = []): array
     {
         $user_timelines = [];
         $errors = [];
@@ -308,6 +309,10 @@ class Twitter
         $request = ['status' => $status ?? ''];
         if (count($media_ids) > 0) {
             $request['media_ids'] = implode(',', $media_ids);
+        }
+
+        if (!empty($options)) {
+            $request = self::setRequestOptionParam($request, $options);
         }
 
         try {
@@ -359,6 +364,20 @@ class Twitter
             'errors'          => $errors,
             'media_id_string' => $media_id_string
         ];
+    }
+
+    private static function setRequestOptionParam(array $request, array $options): array
+    {
+        foreach ($options as $key => $value) {
+            if ($key === 'in_reply_to_status_id') {
+                $request['in_reply_to_status_id'] = $value;
+                $request['auto_populate_reply_metadata'] = true;
+            }
+            if ($key === 'attachment_url' && filter_var($value, FILTER_VALIDATE_URL) && preg_match('|^https?://twitter.com/.*$|', $value)) {
+                $request['attachment_url'] = $value;
+            }
+        }
+        return $request;
     }
 
     private static function validateFileSize(string $path, string $submitFileName): bool
