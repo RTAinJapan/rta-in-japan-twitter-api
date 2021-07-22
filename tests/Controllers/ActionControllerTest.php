@@ -8,6 +8,7 @@ use DI\Container;
 use yagamuu\TwitterClientForRtainjapan\Twitter;
 use yagamuu\TwitterClientForRtainjapan\Tests\Examples\GetStatusesUserTimelines;
 use org\bovigo\vfs\vfsStream;
+use Prophecy\Prophecy\ObjectProphecy;
 use Slim\Psr7\UploadedFile;
 
 class ActionControllerTest extends TestCase
@@ -21,10 +22,22 @@ class ActionControllerTest extends TestCase
         /** @var Container */
         $container = $app->getContainer();
         
+        $request_body = [
+            'status' => 'Hello, Twitter!',
+            'media_ids' => []
+        ];
+        
         // Twitterクラスのモックオブジェクト
         $twitterProphecy = $this->prophesize(Twitter::class);
         $twitterProphecy
-            ->postUpdate('Hello, Twitter!', [])
+            ->postUpdate(
+                'Hello, Twitter!',
+                [],
+                [
+                    'status' => 'Hello, Twitter!',
+                    'media_ids' => []
+                ]
+            )
             ->willReturn([
                 'errors' => [],
                 'data' => GetStatusesUserTimelines::example()
@@ -34,11 +47,6 @@ class ActionControllerTest extends TestCase
         // DIコンテナにTwitterモックを設定
         $container->set(Twitter::class, $twitterProphecy->reveal());
 
-        $request_body = [
-            'status' => 'Hello, Twitter!',
-            'media_ids' => []
-        ];
-        
         $request = $this->createRequest('POST', '/api/twitter/statuses/update');
         $request = $request->withParsedBody($request_body);
         $response = $app->handle($request);
