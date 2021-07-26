@@ -38,6 +38,7 @@ class Twitter
         try {
             $user_timelines = $this->client->get('statuses/user_timeline', [
                 'screen_name' => getenv('SCREEN_NAME'),
+                'tweet_mode'  => 'extended',
                 'count'       => 10
             ]);
 
@@ -73,7 +74,8 @@ class Twitter
 
         try {
             $mentions_timelines = $this->client->get('statuses/mentions_timeline', [
-                'count'       => 10
+                'count'       => 10,
+                'tweet_mode'  => 'extended'
             ]);
 
             // キャッシュの更新
@@ -279,6 +281,7 @@ class Twitter
             $result = $this->client->get('search/tweets', [
                 'q' => $query,
                 'count' => $count,
+                'tweet_mode'  => 'extended',
                 'result_type' => 'recent'
             ]);
             
