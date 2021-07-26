@@ -59,6 +59,7 @@ class TwitterTest extends TestCase
                     $this->equalTo(
                         [
                             'screen_name' => getenv('SCREEN_NAME'),
+                            'tweet_mode'  => 'extended',
                             'count'       => 10
                         ]
                     )
@@ -85,6 +86,7 @@ class TwitterTest extends TestCase
                     $this->equalTo(
                         [
                             'screen_name' => getenv('SCREEN_NAME'),
+                            'tweet_mode'  => 'extended',
                             'count'       => 10
                         ]
                     )
@@ -108,7 +110,7 @@ class TwitterTest extends TestCase
                 ->method('get')
                 ->with(
                     $this->equalTo('statuses/mentions_timeline'),
-                    $this->equalTo(['count' => 10])
+                    $this->equalTo(['count' => 10, 'tweet_mode' => 'extended'])
                 )->willReturn($api_response);
 
         $twitter = new Twitter($mock_client, $this->cache);
@@ -129,7 +131,7 @@ class TwitterTest extends TestCase
                 ->method('get')
                 ->with(
                     $this->equalTo('statuses/mentions_timeline'),
-                    $this->equalTo(['count' => 10])
+                    $this->equalTo(['count' => 10, 'tweet_mode'  => 'extended'])
                 )->willThrowException(new \RuntimeException($excepted_message));
                 
         $twitter = new Twitter($mock_client, $this->cache);
@@ -465,6 +467,7 @@ class TwitterTest extends TestCase
                         [
                             'q' => 'search test',
                             'count' => 15,
+                            'tweet_mode'  => 'extended',
                             'result_type' => 'recent'
                         ]
                     )
@@ -492,6 +495,7 @@ class TwitterTest extends TestCase
                         [
                             'q' => 'error test',
                             'count' => 15,
+                            'tweet_mode'  => 'extended',
                             'result_type' => 'recent'
                         ]
                     )
@@ -526,6 +530,7 @@ class TwitterTest extends TestCase
                 $this->equalTo(
                     [
                         'screen_name' => getenv('SCREEN_NAME'),
+                        'tweet_mode'  => 'extended',
                         'count'       => 10
                     ]
                 )
